@@ -18,7 +18,8 @@ load_dotenv()
 DB_URL = os.environ["DATABASE_URL"]
 # .csv 로 끝나는 인자만 입력 파일로 인정 (복사해 붙인 주석 "# ..." 등은 무시)
 _csv = [a for a in sys.argv[1:] if a.endswith(".csv")]
-SRC = _csv[0] if _csv else "dart_funding_events.csv"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 저장소 루트
+SRC = _csv[0] if _csv else os.path.join(ROOT, "dart_funding_events.csv")
 
 from dart_funding import _get_json, _cached, load_companies   # noqa: E402
 

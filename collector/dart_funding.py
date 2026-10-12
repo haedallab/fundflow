@@ -30,7 +30,8 @@ REPORT_KEYWORDS = {"CB": "전환사채권발행결정",
 LISTED = {"Y", "K", "N"}                     # 유가증권, 코스닥, 코넥스
 
 
-CACHE = "cache"                               # 중간 결과 저장 (재실행 시 이어받기)
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 저장소 루트
+CACHE = os.path.join(ROOT, "cache")                               # 중간 결과 저장 (재실행 시 이어받기)
 os.makedirs(CACHE, exist_ok=True)
 
 
@@ -185,5 +186,5 @@ if __name__ == "__main__":
     print(pd.DataFrame(fetch_events("00126380", "CB", "20250101", "20261011")))  # 삼성전자
 
     df = collect("20250101")
-    df.to_csv("dart_funding_events.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join(ROOT, "dart_funding_events.csv"), index=False, encoding="utf-8-sig")
     print(df.groupby("ftype").size())
