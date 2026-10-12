@@ -29,7 +29,7 @@
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);overflow:hidden;
   font-family:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;
-  font-feature-settings:"tnum";line-height:1.45}
+  font-feature-settings:"tnum";line-height:1.45;word-break:keep-all}
 .deck{position:relative;height:calc(100% - 56px)}
 .slide{position:absolute;inset:0;padding:40px 48px 24px;overflow-y:auto;
   opacity:0;visibility:hidden;transform:translateX(24px);
@@ -48,7 +48,7 @@ h2 small{font-size:15px;color:var(--muted);font-weight:500;margin-left:8px}
 .kpi .k{font-size:12px;color:var(--muted)}
 
 /* cover */
-.cover{justify-content:center}
+.cover{justify-content:safe center}
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:36px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;
   cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -56,8 +56,11 @@ h2 small{font-size:15px;color:var(--muted);font-weight:500;margin-left:8px}
 .tile .t{font-size:13px;color:var(--text-2)}
 .tile .v{font-size:24px;font-weight:700;margin:6px 0 2px}
 .tile .s{font-size:12px;color:var(--muted)}
-.tile .top1{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
-.tile .top1 b{font-weight:600}
+.tile .top3{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line);font-size:13px}
+.tile .top3 li{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 0 0}
+.tile .rk3{color:var(--muted);font-size:12px}
+.tile .nm3{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .am3{color:var(--text-2);white-space:nowrap}
 
 /* type slide */
 .body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;flex:1;min-height:0}
@@ -126,6 +129,7 @@ nav button:disabled{opacity:.35;cursor:default}
   .method dl{grid-template-columns:1fr;gap:4px}
   .method dd{margin-bottom:10px}
 }
+@media (max-width:600px){.tiles{grid-template-columns:1fr}}
 .flow{margin:0;padding-left:20px;font-size:14px;color:var(--text-2)}
 .flow li{margin:0 0 10px}
 .flow b{color:var(--text);font-weight:600;margin-right:6px}
@@ -189,7 +193,7 @@ slides.push(`<div class="inner cover">
       <div class="t">${esc(s.label)} · ${esc(s.code)}</div>
       <div class="v">${won(s.total)}</div>
       <div class="s">${s.count.toLocaleString()}건 · ${s.corps.toLocaleString()}개사</div>
-      <div class="top1">${s.top[0] ? `1위 <b>${esc(s.top[0].name)}</b> ${won(s.top[0].total)}` : "발행 없음"}</div>
+      <ol class="top3">${s.top.length ? s.top.slice(0, 3).map((r, k) => `<li><span class="rk3">${k + 1}</span><span class="nm3">${esc(r.name)}</span><span class="am3">${won(r.total)}</span></li>`).join("") : '<li class="na">발행 없음</li>'}</ol>
     </button>`).join("")}
   </div>
 </div>`);
