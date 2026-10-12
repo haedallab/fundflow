@@ -1,8 +1,8 @@
 # fundflow API 설명 문서
 
 - 기술: FastAPI (Python) · 배포: Render
-- Base URL: `https://<render-서비스>.onrender.com`
-- Swagger UI: `{Base URL}/docs` · ReDoc: `{Base URL}/redoc`
+- Base URL: `https://fundflow-api-scjl.onrender.com`
+- Swagger UI: https://fundflow-api-scjl.onrender.com/docs · ReDoc: https://fundflow-api-scjl.onrender.com/redoc
 - 모든 API는 **GET** 요청이고 JSON으로 응답합니다. 인증은 없습니다(공개 조회 전용).
 - 금액 단위는 원(KRW), 날짜는 `YYYY-MM-DD`. 정정공시로 대체된 원공시는 기본적으로 제외합니다.
 
