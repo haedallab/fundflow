@@ -15,7 +15,7 @@ DART OpenAPI ──(collector, Python)──▶ Supabase PostgreSQL ──▶ Fa
 | 구분 | 기술 | 배포 | 위치 |
 |---|---|---|---|
 | 데이터 수집 | Python, requests, pandas | 로컬 실행 | `collector/` |
-| DB | PostgreSQL | Supabase | `db/schema.sql` |
+| DB | PostgreSQL | Supabase | `supabase/migrations/` |
 | 백엔드 | FastAPI | Render | `backend/` |
 | 프론트엔드 | HTML·CSS·JavaScript | Vercel | `frontend/` |
 
@@ -36,7 +36,8 @@ DATABASE_URL=postgresql://postgres.xxxx:비밀번호@aws-0-ap-northeast-2.pooler
 `DATABASE_URL`은 Supabase 대시보드 > Connect > **Session pooler** 문자열을 씁니다 (Render·로컬 모두 IPv4로 접속 가능).
 
 ### 2. DB 테이블 생성
-Supabase SQL Editor에서 `db/schema.sql` 실행.
+Supabase 프로젝트가 GitHub 저장소와 연동되어 있어 `main`에 병합된 `supabase/migrations/*.sql`이 운영 DB에 자동 적용됩니다.
+(연동 없이 쓸 때는 Supabase SQL Editor에서 해당 파일을 실행)
 
 ### 3. 데이터 수집·적재 (저장소 루트에서)
 ```bash

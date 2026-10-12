@@ -46,6 +46,10 @@ create table if not exists financials (
 );
 create index if not exists ix_fin_lookup on financials (corp_code, available_from desc);
 
+comment on table companies is 'DART 상장사 (자금조달 공시 발행 회사)';
+comment on table funding_events is 'CB/BW/EB/유상증자 결정 공시';
+comment on table financials is '발행 직전 재무상태표 요약 (자산/부채/자본총계)';
+
 -- 공개 읽기 전용 접근은 백엔드(FastAPI)만 사용하므로 RLS를 켜고 정책은 두지 않음
 alter table companies       enable row level security;
 alter table funding_events  enable row level security;

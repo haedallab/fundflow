@@ -1,6 +1,6 @@
 # fundflow DB 테이블 문서
 
-- DBMS: PostgreSQL (Supabase) · 스키마 정의: [`db/schema.sql`](../db/schema.sql)
+- DBMS: PostgreSQL (Supabase) · 스키마 정의: [`supabase/migrations/`](../supabase/migrations/)
 - 적재: `collector/load_db.py` (재실행 시 upsert로 갱신, 중복 없음)
 
 ## 테이블 관계
