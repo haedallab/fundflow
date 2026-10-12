@@ -16,7 +16,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DB_URL = os.environ["DATABASE_URL"]
-SRC = sys.argv[1] if len(sys.argv) > 1 else "dart_funding_events.csv"
+# .csv 로 끝나는 인자만 입력 파일로 인정 (복사해 붙인 주석 "# ..." 등은 무시)
+_csv = [a for a in sys.argv[1:] if a.endswith(".csv")]
+SRC = _csv[0] if _csv else "dart_funding_events.csv"
 
 from dart_funding import _get_json, _cached, load_companies   # noqa: E402
 
@@ -118,6 +120,8 @@ def fetch_financials(corp_code, issue_dt):
 
 # ── 적재 ───────────────────────────────────────────────────────────
 def main():
+    if not os.path.exists(SRC):
+        sys.exit(f"{SRC} 파일이 없습니다. 먼저 python collector/dart_funding.py 로 수집하세요.")
     df = pd.read_csv(SRC, dtype=str)
     rows = [normalize(r) for r in df.to_dict("records")]
     rows = [r for r in rows if r["amount"] and r["amount"] > 0 and r["rcept_dt"]]

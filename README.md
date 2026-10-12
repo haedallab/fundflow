@@ -43,8 +43,8 @@ Supabase 프로젝트가 GitHub 저장소와 연동되어 있어 `main`에 병�
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python collector/dart_funding.py     # 공시 수집 → dart_funding_events.csv
-python collector/load_db.py          # 재무제표 조회 + DB 적재
+python collector/dart_funding.py
+python collector/load_db.py
 ```
 
 ### 4. 백엔드 로컬 실행
