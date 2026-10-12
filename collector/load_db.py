@@ -7,7 +7,7 @@
 
 필요한 환경변수(.env): DART_API_KEY, DATABASE_URL
 """
-import os, re, sys, json
+import os, re, sys, json, time
 from datetime import date
 import pandas as pd
 import psycopg
@@ -103,9 +103,12 @@ def fetch_financials(corp_code, issue_dt):
     """발행일 이전에 공시된 가장 최근 재무제표 (연결·별도 둘 다 있으면 둘 다)"""
     for y, code, base, avail in report_candidates(issue_dt)[:4]:
         def call(y=y, code=code):
+            time.sleep(0.5)                    # DART 차단 방지 (캐시에 없을 때만 호출됨)
             j = _get_json("fnlttSinglAcnt.json", corp_code=corp_code,
                           bsns_year=str(y), reprt_code=code)
-            return j.get("list", []) if j.get("status") == "000" else []
+            if j.get("status") not in ("000", "013"):      # 일시 오류는 캐시하지 않음
+                raise RuntimeError(f'{j.get("status")} {j.get("message")}')
+            return j.get("list", [])
         rows = _cached(f"bs_{corp_code}_{y}_{code}", call)
         found = []
         for fs in ("CFS", "OFS"):
@@ -149,10 +152,17 @@ def main():
     for r in rows:
         if not r["superseded"]:
             need.setdefault(r["corp_code"], set()).add(r["rcept_dt"])
+    stopped = False
     for i, (cc, dts) in enumerate(need.items(), 1):
-        for dt in dts:
-            for f in fetch_financials(cc, dt):
-                fins[f[:4]] = f
+        try:
+            for dt in dts:
+                for f in fetch_financials(cc, dt):
+                    fins[f[:4]] = f
+        except RuntimeError as e:
+            # DART가 연결을 막으면 받은 데까지만 적재하고 종료 → 재실행 시 cache/에서 이어받음
+            print(f"  ! DART 응답 중단 ({e}). {i - 1}/{len(need)}개사까지 받은 재무제표로 먼저 적재합니다.")
+            stopped = True
+            break
         if i % 50 == 0:
             print(f"  재무제표 {i}/{len(need)}개사")
     print(f"재무제표 {len(fins)}건 ({len(need)}개사)")
@@ -186,6 +196,8 @@ def main():
               total_equity=excluded.total_equity""", list(fins.values()))
         con.commit()
     print("DB 적재 완료")
+    if stopped:
+        print("※ 재무제표가 일부 빠져 있습니다. 10~30분 뒤 같은 명령을 다시 실행하면 나머지를 이어서 채웁니다.")
 
 
 if __name__ == "__main__":
