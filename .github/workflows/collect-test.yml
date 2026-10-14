@@ -1,0 +1,37 @@
+# fund-v2 브랜치 시험 수집: 소량 파싱 후 로그와 원문 일부를 probe-samples 브랜치에 저장 (전환 후 삭제)
+name: collect-test
+on:
+  push:
+    branches: [fund-v2]
+    paths: ["collector/**", ".github/workflows/collect-test.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: collect
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Collect (small)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RUN_MINUTES: "25"
+          PARSE_LIMIT: "60"
+          DEBUG_DIR: debug
+        run: python -u collector/run.py 2>&1 | tee run.log
+      - name: Save samples
+        if: always()
+        run: |
+          mkdir -p out && cp run.log out/ 2>/dev/null; cp -r debug out/ 2>/dev/null || true
+          cd out && git init -q && git checkout -q -b probe-samples
+          git -c user.name=ci -c user.email=ci@example.com add -A
+          git -c user.name=ci -c user.email=ci@example.com commit -qm "collect-test samples"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe-samples
