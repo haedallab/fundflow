@@ -3,7 +3,10 @@ import io, json, os, sys, time, zipfile, collections
 from datetime import date, timedelta
 import requests
 
-KEY = os.environ["DART_API_KEY"]
+KEY = os.environ.get("DART_API_KEY", "").strip()
+print("key length:", len(KEY))
+if len(KEY) != 40:
+    raise SystemExit("DART_API_KEY 시크릿이 없거나 40자가 아닙니다")
 OUT = "samples"
 os.makedirs(OUT, exist_ok=True)
 S = requests.Session()
@@ -25,7 +28,7 @@ for dt in ("G001", "G002", "G003"):
     while True:
         j = get("list.json", bgn_de=bgn.strftime("%Y%m%d"), end_de=end.strftime("%Y%m%d"),
                 pblntf_ty="G", pblntf_detail_ty=dt, page_no=page, page_count=100).json()
-        print(dt, page, j.get("status"), j.get("total_count"))
+        print(dt, page, j.get("status"), j.get("message"), j.get("total_count"))
         if j.get("status") != "000": break
         for r in j["list"]: r["_detail"] = dt
         rows += j["list"]
