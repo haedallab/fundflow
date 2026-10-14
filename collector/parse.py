@@ -14,6 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 
 WEB = "https://dart.fss.or.kr"
+PARSER_VERSION = 2          # 원본 신고서 파싱 규칙을 바꾸면 올림 → 이전 결과는 다시 파싱
 
 
 class Blocked(Exception):
@@ -202,7 +203,7 @@ def company(name: Optional[str]) -> Optional[str]:
     if not name:
         return None
     s = re.sub(r"\(주\)|㈜|주식회사|\(株\)", "", name)
-    s = re.sub(r"\s+", "", s).strip(" .,:;")
+    s = re.sub(r"\s+", "", s).strip(" .,:;-")
     if not s or len(s) > 30:
         return None
     for k, v in ALIASES:
@@ -211,32 +212,42 @@ def company(name: Optional[str]) -> Optional[str]:
     return s
 
 
-def _company_after(t: str, head: str) -> Optional[str]:
+NAME_AFTER = re.compile(r"회\s*사\s*명\s*[:：]?\s*(.{2,40}?)\s*(?:주\s*소|소\s*재\s*지|본\s*점|연\s*락\s*처|대\s*표|홈\s*페\s*이\s*지|설\s*립|전\s*화|\(|$)")
+
+
+def _name_at(t: str) -> Optional[str]:
+    m = NAME_AFTER.search(t)
+    if not m:
+        return None
+    name = company(m.group(1))
+    if name and re.search(r"평가|회계|법무", name):
+        return None
+    return name
+
+
+def _company_after(t: str, head: str, window: int = 300) -> Optional[str]:
     i = t.find(head)
     if i < 0:
         return None
-    m = re.search(r"회\s*사\s*명\s*[:：]?\s*([^\s]+(?:\s+(?:은행|증권|주식회사|㈜))?)", t[i:i + 600])
-    return company(m.group(1)) if m else None
+    return _name_at(t[i:i + window])
 
 
 def related_companies(t: str, section: Optional[str] = None) -> dict:
-    """section = '기타 집합투자기구 관련회사' 절 본문: 첫 회사명이 신탁업자, 일반사무관리회사 절의 회사명이 사무관리"""
+    """section = '기타 집합투자기구 관련회사' 절 본문: 첫 회사명이 신탁업자(보관회사), 일반사무관리회사 절의 회사명이 사무관리"""
     out = {}
+    src = section or t
+    tr = None
     if section:
-        m = re.search(r"회\s*사\s*명\s*[:：]?\s*([^\s]+(?:\s+(?:은행|증권|주식회사|㈜))?)", section)
-        tr = company(m.group(1)) if m else None
-        ad = _company_after(section, "일반사무관리회사에 관한") or _company_after(section, "일반사무관리회사")
-        if tr:
-            out["trustee"] = tr
-        if ad and ad != out.get("trustee"):
-            out["admin_co"] = ad
-        if out:
-            return out
-    tr = (_company_after(t, "[가] 신탁") or _company_after(t, "신탁회사") or _company_after(t, "신탁업자")
-          or _company_after(t, "보관회사"))
+        tr = (_company_after(section, "신탁업자", 400) or _company_after(section, "신탁회사", 400)
+              or _company_after(section, "보관회사", 400) or _name_at(section[:600]))
+    else:
+        tr = (_company_after(t, "[가] 신탁") or _company_after(t, "신탁회사에 관한") or _company_after(t, "신탁업자에 관한"))
     if tr:
         out["trustee"] = tr
-    ad = _company_after(t, "일반사무관리회사에 관한") or _company_after(t, "일반사무관리회사")
+    ad = None
+    m = re.search(r"(?:[가-하]\.|\]|\d\.|\))\s*일반사무관리회사(?!는|가|의|,|및)", src)
+    if m:
+        ad = _name_at(src[m.start():m.start() + 400])
     if ad and ad != tr:
         out["admin_co"] = ad
     return out
@@ -406,4 +417,5 @@ def parse_filing(v: Viewer, rcp: str, kind: str, is_amend: bool, debug: Optional
                 out.update(ft)
                 break
     out["_nodes"] = len(nodes)
+    out["_v"] = PARSER_VERSION
     return out

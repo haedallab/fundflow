@@ -24,7 +24,7 @@ from psycopg.types.json import Jsonb
 
 sys.path.insert(0, os.path.dirname(__file__))
 from dart import BudgetExceeded, Dart  # noqa: E402
-from parse import Blocked, Viewer, parse_filing  # noqa: E402
+from parse import PARSER_VERSION, Blocked, Viewer, parse_filing  # noqa: E402
 
 load_dotenv()
 T0 = time.time()
@@ -342,6 +342,9 @@ def main():
             print("  ※", e)
         print(f"  DART 호출 {dart.calls}회")
         n = con.execute(TARGET_SQL).rowcount
+        n += con.execute("""update filings set status = 'pending'
+                            where status = 'done' and kind in ('SHELF','REG') and not is_amend
+                              and coalesce((parsed->>'_v')::int, 1) < %s""", (PARSER_VERSION,)).rowcount
         print(f"[B] 새 파싱 대상 {n}건")
         touched = parse_pending(con, viewer)
         refresh_funds(con, None if os.environ.get("REBUILD") else touched)
