@@ -175,7 +175,9 @@ where f.rcept_no = l.rcept_no and f.status = 'skip'
 # ── C. 원문 파싱 ────────────────────────────────────────────────────────
 def parse_pending(con, viewer: Viewer) -> set:
     rows = con.execute("""select rcept_no, fund_key, kind, is_amend from filings
-                          where status = 'pending' order by rcept_dt desc, rcept_no desc
+                          where status = 'pending'
+                          order by (kind in ('SHELF','REG') and not is_amend) desc, kind = 'ISSUE' desc,
+                                   rcept_dt desc, rcept_no desc
                           limit %s""", (PARSE_LIMIT or 100000,)).fetchall()
     print(f"[C] 원문 파싱 대기 {len(rows)}건")
     touched, ok, bad, dumped = set(), 0, 0, 0
@@ -331,7 +333,7 @@ def main():
         return probe_only()
     budget = int(os.environ.get("DART_BUDGET", "15000"))
     dart = Dart(secret_key(), budget)
-    viewer = Viewer(pause=float(os.environ.get("WEB_PAUSE", "0.5")))
+    viewer = Viewer(pause=float(os.environ.get("WEB_PAUSE", "0.3")))
     with psycopg.connect(**db_kwargs(), autocommit=True, prepare_threshold=None) as con:
         print(f"[A] 공시 목록 수집 (최근 {YEARS}년, DART 호출 예산 {budget})")
         try:

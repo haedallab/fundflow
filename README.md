@@ -9,7 +9,7 @@
 | 화면 | Vercel `frontend/` → https://fundflow-lilac.vercel.app | 개요 · 펀드 Monitor · 운용사 상세 · 운용사 리그테이블 · 수탁사 리그테이블 |
 | API | Render `backend/` → https://fundflow-api-scjl.onrender.com/docs | FastAPI, 읽기 전용 |
 | DB | Supabase PostgreSQL `supabase/migrations/` | managers · funds · filings · fetch_log |
-| 수집 | GitHub Actions `.github/workflows/collect.yml` (3시간마다) | `collector/run.py` |
+| 수집 | GitHub Actions `.github/workflows/collect.yml` (2시간마다) | `collector/run.py` |
 
 ## 데이터 흐름
 
