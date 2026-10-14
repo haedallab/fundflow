@@ -3,8 +3,11 @@ import io, json, os, sys, time, zipfile, collections
 from datetime import date, timedelta
 import requests
 
-KEY = os.environ.get("DART_API_KEY", "").strip()
-print("key length:", len(KEY))
+import re
+_raw = os.environ.get("DART_API_KEY", "")
+_m = re.findall(r"[0-9a-fA-F]{40}", _raw)
+print("raw length:", len(_raw), "| 40자리 키 후보:", len(_m), "| 동일 여부:", len(set(_m)) <= 1, "| 앞뒤 공백/줄바꿈:", _raw != _raw.strip())
+KEY = _m[0] if _m else ""
 if len(KEY) != 40:
     raise SystemExit("DART_API_KEY 시크릿이 없거나 40자가 아닙니다")
 OUT = "samples"
