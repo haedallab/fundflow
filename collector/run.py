@@ -31,6 +31,7 @@ T0 = time.time()
 RUN_MIN = float(os.environ.get("RUN_MINUTES", "100"))
 YEARS = int(os.environ.get("YEARS", "3"))
 DEBUG_DIR = os.environ.get("DEBUG_DIR")
+LIST_MIN = float(os.environ.get("LIST_MINUTES", "50"))
 PARSE_LIMIT = int(os.environ.get("PARSE_LIMIT", "0") or 0)
 
 
@@ -111,6 +112,9 @@ def collect_list(con, dart: Dart):
             closed = e < today - timedelta(days=7)          # 1주일 지난 구간은 다시 받지 않음
             if closed and task in done:
                 continue
+            if minutes() > LIST_MIN:
+                print(f"  목록 수집 시간 한도 {LIST_MIN:.0f}분 도달, 남은 구간은 다음 실행에서")
+                return
             n = page = 0
             total = 1
             while page * 100 < total:
