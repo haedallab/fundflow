@@ -19,6 +19,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - name: Parser probe (DB 없이)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          PROBE_ONLY: "1"
+          DEBUG_DIR: probe
+        run: python -u collector/run.py 2>&1 | tee probe.log
       - name: Collect (small)
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
@@ -30,7 +36,7 @@ jobs:
       - name: Save samples
         if: always()
         run: |
-          mkdir -p out && cp run.log out/ 2>/dev/null; cp -r debug out/ 2>/dev/null || true
+          mkdir -p out && cp run.log probe.log out/ 2>/dev/null; cp -r debug probe out/ 2>/dev/null || true
           cd out && git init -q && git checkout -q -b probe-samples
           git -c user.name=ci -c user.email=ci@example.com add -A
           git -c user.name=ci -c user.email=ci@example.com commit -qm "collect-test samples"

@@ -290,7 +290,41 @@ def refresh_funds(con, keys: set | None):
     print(f"[D] 펀드 {len(out)}개 원문 값 반영")
 
 
+def probe_only():
+    """DB 없이 최근 공시 몇 건을 파싱해 결과·원문을 DEBUG_DIR에 저장 (파서 점검용)"""
+    dart, viewer = Dart(secret_key(), 50), Viewer(pause=0.5)
+    end = date.today()
+    picks = {"SHELF": [], "REG": [], "ISSUE": [], "PROSPECTUS": []}
+    for ty in ("G001", "G002"):
+        j = dart.json("list", pblntf_detail_ty=ty, bgn_de=f"{end - timedelta(days=60):%Y%m%d}",
+                      end_de=f"{end:%Y%m%d}", page_count=100)
+        for r in j.get("list", []):
+            kind, amend, name = classify(r["report_nm"])
+            if kind in picks and (not amend or kind == "PROSPECTUS") and len(picks[kind]) < (8 if kind in ("SHELF", "REG") else 3):
+                picks[kind].append((r["rcept_no"], kind, amend, r["report_nm"]))
+    os.makedirs(DEBUG_DIR or "debug", exist_ok=True)
+    summary = []
+    for rows in picks.values():
+        for rcp, kind, amend, nm in rows:
+            dbg = {}
+            try:
+                p = parse_filing(viewer, rcp, kind, amend, dbg)
+            except Exception as e:  # noqa: BLE001
+                p = {"error": repr(e)}
+            summary.append({"rcept_no": rcp, "report_nm": nm, "parsed": p})
+            with open(f"{DEBUG_DIR or 'debug'}/{rcp}_{kind}.json", "w", encoding="utf-8") as f:
+                json.dump({"report_nm": nm, "parsed": p, "nodes": dbg.get("nodes"),
+                           "html": [[t, h[:200000]] for t, h in dbg.get("html", [])]}, f, ensure_ascii=False)
+            print(rcp, kind, nm[:60], "→", json.dumps({k: v for k, v in p.items() if k != "classes"},
+                                                      ensure_ascii=False)[:400],
+                  "| classes", len(p.get("classes") or []), (p.get("classes") or [None])[0])
+    with open(f"{DEBUG_DIR or 'debug'}/summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, ensure_ascii=False, indent=1)
+
+
 def main():
+    if os.environ.get("PROBE_ONLY"):
+        return probe_only()
     budget = int(os.environ.get("DART_BUDGET", "15000"))
     dart = Dart(secret_key(), budget)
     viewer = Viewer(pause=float(os.environ.get("WEB_PAUSE", "0.5")))
