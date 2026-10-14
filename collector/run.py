@@ -16,6 +16,7 @@ import re
 import sys
 import time
 from datetime import date, datetime, timedelta
+from urllib.parse import unquote
 
 import psycopg
 from dotenv import load_dotenv
@@ -41,12 +42,25 @@ def secret_key() -> str:
     return keys[0]
 
 
-def db_url() -> str:
+def db_kwargs() -> dict:
+    """DATABASE_URL → 접속 인자. 비밀번호의 특수문자(@ # / 등)를 인코딩하지 않고 넣어도 동작하도록 직접 분해"""
     u = os.environ.get("DATABASE_URL", "").strip().strip('"').strip("'")
     u = re.sub(r"^DATABASE_URL\s*=\s*", "", u).strip().strip('"').strip("'")
-    if not u.startswith("postgres"):
+    m = re.match(r"^postgres(?:ql)?://(.*)$", u, re.S)
+    if not m:
         sys.exit("환경변수 DATABASE_URL 이 postgresql:// 로 시작하지 않습니다")
-    return u
+    cred, _, rest = m.group(1).rpartition("@")
+    user, _, pw = cred.partition(":")
+    hostport, _, db = rest.partition("/")
+    host, _, port = hostport.partition(":")
+    db = db.split("?")[0] or "postgres"
+    if re.fullmatch(r"\[.*\]", pw):           # [YOUR-PASSWORD] 자리에 괄호까지 남긴 경우
+        pw = pw[1:-1]
+    if re.search(r"%[0-9A-Fa-f]{2}", pw):
+        pw = unquote(pw)
+    print(f"  DB 접속: user={user} host={host} port={port or 5432} db={db} "
+          f"password={len(pw)}자{' (YOUR-PASSWORD 그대로)' if 'YOUR-PASSWORD' in pw.upper() else ''}")
+    return {"user": unquote(user), "password": pw, "host": host, "port": int(port or 5432), "dbname": db}
 
 
 def minutes() -> float:
@@ -280,7 +294,7 @@ def main():
     budget = int(os.environ.get("DART_BUDGET", "15000"))
     dart = Dart(secret_key(), budget)
     viewer = Viewer(pause=float(os.environ.get("WEB_PAUSE", "0.5")))
-    with psycopg.connect(db_url(), autocommit=True, prepare_threshold=None) as con:
+    with psycopg.connect(**db_kwargs(), autocommit=True, prepare_threshold=None) as con:
         print(f"[A] 공시 목록 수집 (최근 {YEARS}년, DART 호출 예산 {budget})")
         try:
             collect_list(con, dart)
