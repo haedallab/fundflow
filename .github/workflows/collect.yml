@@ -6,6 +6,9 @@ name: collect
 on:
   schedule:
     - cron: "17 */2 * * *"      # 2시간마다 (정각 혼잡을 피해 17분)
+  push:                          # 수집기 코드가 바뀌면 바로 한 번 실행
+    branches: [main]
+    paths: ["collector/**", ".github/workflows/collect.yml"]
   workflow_dispatch:
     inputs:
       minutes:
