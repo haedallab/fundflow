@@ -1,0 +1,13 @@
+  DB 접속: user=postgres.iuoqigaerlslsbxxgojq host=aws-0-ap-northeast-2.pooler.supabase.com port=5432 db=postgres password=16자
+[A] 공시 목록 수집 (최근 3년, DART 호출 예산 15000)
+  목록 G001 2026-07-17~2026-10-14: 4751건 (DART 호출 48)
+  목록 G002 2026-07-17~2026-10-14: 121건 (DART 호출 50)
+  목록 G003 2026-07-17~2026-10-14: 0건 (DART 호출 51)
+  DART 호출 51회
+[B] 새 파싱 대상 0건
+[C] 원문 파싱 대기 60건
+  파싱 50건 (성공 50, 실패 0, 웹 요청 320, 7분)
+  ! 웹 dsaf001/main.do ReadTimeout HTTPSConnectionPool(host='dart.fss.or.kr', port=443): Read timed out. (read timeout=60) → 5초 뒤 재시도
+  파싱 완료 60건, 실패 0건, 웹 요청 401회
+[D] 펀드 59개 원문 값 반영
+※ 운용사 183 · 펀드 6206 · 공시 71561 (파싱 대기 11510 · 완료 60 · 실패 0) · 10분
