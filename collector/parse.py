@@ -75,7 +75,7 @@ def squash(s: str) -> str:
 
 
 ORIGINAL_WANT = ("투자결정시유의사항", "요약정보", "1.집합투자기구의명칭", "2.집합투자기구의종류및형태",
-                 "13.보수및수수료", "3.기타집합투자기구관련회사")
+                 "10.집합투자기구의투자위험", "13.보수및수수료", "3.기타집합투자기구관련회사")
 
 
 def pick_nodes(nodes: list[dict], original: bool) -> list[dict]:
@@ -219,8 +219,19 @@ def _company_after(t: str, head: str) -> Optional[str]:
     return company(m.group(1)) if m else None
 
 
-def related_companies(t: str) -> dict:
+def related_companies(t: str, section: Optional[str] = None) -> dict:
+    """section = '기타 집합투자기구 관련회사' 절 본문: 첫 회사명이 신탁업자, 일반사무관리회사 절의 회사명이 사무관리"""
     out = {}
+    if section:
+        m = re.search(r"회\s*사\s*명\s*[:：]?\s*([^\s]+(?:\s+(?:은행|증권|주식회사|㈜))?)", section)
+        tr = company(m.group(1)) if m else None
+        ad = _company_after(section, "일반사무관리회사에 관한") or _company_after(section, "일반사무관리회사")
+        if tr:
+            out["trustee"] = tr
+        if ad and ad != out.get("trustee"):
+            out["admin_co"] = ad
+        if out:
+            return out
     tr = (_company_after(t, "[가] 신탁") or _company_after(t, "신탁회사") or _company_after(t, "신탁업자")
           or _company_after(t, "보관회사"))
     if tr:
@@ -386,7 +397,8 @@ def parse_filing(v: Viewer, rcp: str, kind: str, is_amend: bool, debug: Optional
     if kind == "ISSUE":
         out.update(issue_report(text_all))
     if original:
-        out.update(related_companies(text_all))
+        sec = " ".join(plain(h) for t, h in htmls if t.startswith("3.기타집합투자기구관련회사"))
+        out.update(related_companies(text_all, sec or None))
         fee_html = [h for t, h in htmls if t.startswith("13.보수")] or [h for t, h in htmls if t.startswith("요약정보")]
         for h in fee_html:
             ft = fee_table(h)
