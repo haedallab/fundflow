@@ -366,7 +366,8 @@ def main():
                             where status = 'error' and parsed_at < now() - interval '6 hours'""").rowcount
         n += con.execute("""update filings set status = 'pending'
                             where status = 'done' and kind in ('SHELF','REG') and not is_amend
-                              and coalesce((parsed->>'_v')::int, 1) < %s""", (PARSER_VERSION,)).rowcount
+                              and coalesce((parsed->>'_v')::int, 1) < %s
+                              and coalesce(parsed->>'trustee', '') !~ '(은행|증권|금융|신탁)'""", (PARSER_VERSION,)).rowcount
         print(f"[B] 새 파싱 대상 {n}건")
         touched = parse_pending(con, viewer)
         refresh_funds(con, None)          # 매번 전체 재계산 (중간에 끊긴 실행이 남긴 누락도 메움)

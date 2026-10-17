@@ -14,7 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 
 WEB = "https://dart.fss.or.kr"
-PARSER_VERSION = 2          # 원본 신고서 파싱 규칙을 바꾸면 올림 → 이전 결과는 다시 파싱
+PARSER_VERSION = 3          # 원본 신고서 파싱 규칙을 바꾸면 올림 → 이전 결과는 다시 파싱
 
 
 class Blocked(Exception):
@@ -240,6 +240,9 @@ def related_companies(t: str, section: Optional[str] = None) -> dict:
     if section:
         tr = (_company_after(section, "신탁업자", 400) or _company_after(section, "신탁회사", 400)
               or _company_after(section, "보관회사", 400) or _name_at(section[:600]))
+        if not tr:          # 표 머리글(회사명 | 주소 및 연락처 …) 뒤에 값이 오는 서식: 앞부분에서 은행·증권사 이름을 찾음
+            m = re.search(r"([가-힣A-Za-z]{1,12}(?:은행|증권금융|증권|신탁)(?:\s*주식회사|㈜|\(주\))?)", section[:900])
+            tr = company(m.group(1)) if m and not re.match(r"(집합투자|투자|신탁업|수익)", m.group(1)) else None
     else:
         tr = (_company_after(t, "[가] 신탁") or _company_after(t, "신탁회사에 관한") or _company_after(t, "신탁업자에 관한"))
     if tr:
