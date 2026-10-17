@@ -188,7 +188,7 @@ def issue_report(t: str) -> dict:
 
 
 # 수탁·사무관리 회사 이름 통일
-ALIASES = [("국민은행", "KB국민은행"), ("농협은행", "NH농협은행"), ("기업은행", "IBK기업은행"),
+ALIASES = [("엔에이치투자", "NH투자증권"), ("케이비증권", "KB증권"), ("홍콩상", "HSBC은행"), ("국민은행", "KB국민은행"), ("농협은행", "NH농협은행"), ("기업은행", "IBK기업은행"),
            ("중소기업은행", "IBK기업은행"), ("스탠다드차타드", "SC제일은행"), ("SC제일", "SC제일은행"),
            ("홍콩상하이", "HSBC은행"), ("HSBC", "HSBC은행"), ("씨티은행", "한국씨티은행"),
            ("신한금융투자", "신한투자증권"), ("도이치", "도이치은행"), ("한국증권금융", "한국증권금융"),
@@ -204,7 +204,9 @@ def company(name: Optional[str]) -> Optional[str]:
         return None
     s = re.sub(r"\(주\)|㈜|주식회사|\(株\)", "", name)
     s = re.sub(r"\s+", "", s).strip(" .,:;-")
-    if not s or len(s) > 30 or len(s) < 2 or re.match(r"(주소|연락|대표|홈페이지|전화|해당|없음|-)", s):
+    if not s or len(s) > 40 or len(s) < 2 or re.match(r"(주소|연락|대표|홈페이지|전화|해당|없음|-|의의)", s):
+        return None
+    if re.search(r"(예금계좌|펀드파트너스|펀드서비스|평가)", s):
         return None
     for k, v in ALIASES:
         if k in s:
