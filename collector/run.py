@@ -280,23 +280,40 @@ def refresh_funds(con, keys: set | None):
         cl = m.get("classes") or []
         rep = cl[0] if cl else {}
         totals = [c["total"] for c in cl if c.get("total") is not None]
-        out.append((m.get("fund_code"), m.get("legal_form"), m.get("asset_class"), m.get("asset_sub"),
-                    m.get("open_end"), m.get("additional"), m.get("special"), m.get("risk_grade"),
-                    m.get("risk_label"), m.get("offer_units"), m.get("trustee"), m.get("admin_co"),
-                    r4(rep.get("mgmt")), r4(rep.get("sales")), r4(rep.get("trust")), r4(rep.get("admin")),
-                    r4(rep.get("total")), r4(rep.get("ter")), r4(min(totals)) if totals else None,
-                    r4(max(totals)) if totals else None, len(cl) or None, Jsonb(cl) if cl else None,
-                    m.get("nav"), m.get("nav_prev"), m.get("subs_amt"), m.get("redeem_amt"),
-                    m.get("nav_period"), m.get("nav_rcept_no"), key))
-    with con.cursor() as cur:
-        cur.executemany("""update funds set fund_code=%s, legal_form=%s, asset_class=%s, asset_sub=%s,
-              open_end=%s, additional=%s, special=%s, risk_grade=%s, risk_label=%s, offer_units=%s,
-              trustee=%s, admin_co=%s, fee_mgmt=%s, fee_sales=%s, fee_trust=%s, fee_admin=%s,
-              fee_total=%s, fee_ter=%s, fee_total_min=%s, fee_total_max=%s, class_count=%s, classes=%s,
-              nav=%s, nav_prev=%s, subs_amt=%s, redeem_amt=%s, nav_period=%s, nav_rcept_no=%s,
-              updated_at=now() where fund_key=%s""", out)
+        out.append({
+            "fund_key": key, "fund_code": m.get("fund_code"), "legal_form": m.get("legal_form"),
+            "asset_class": m.get("asset_class"), "asset_sub": m.get("asset_sub"),
+            "open_end": m.get("open_end"), "additional": m.get("additional"), "special": m.get("special"),
+            "risk_grade": m.get("risk_grade"), "risk_label": m.get("risk_label"),
+            "offer_units": m.get("offer_units"), "trustee": m.get("trustee"), "admin_co": m.get("admin_co"),
+            "fee_mgmt": r4(rep.get("mgmt")), "fee_sales": r4(rep.get("sales")), "fee_trust": r4(rep.get("trust")),
+            "fee_admin": r4(rep.get("admin")), "fee_total": r4(rep.get("total")), "fee_ter": r4(rep.get("ter")),
+            "fee_total_min": r4(min(totals)) if totals else None, "fee_total_max": r4(max(totals)) if totals else None,
+            "class_count": len(cl) or None, "classes": cl or None,
+            "nav": m.get("nav"), "nav_prev": m.get("nav_prev"), "subs_amt": m.get("subs_amt"),
+            "redeem_amt": m.get("redeem_amt"), "nav_period": m.get("nav_period"), "nav_rcept_no": m.get("nav_rcept_no")})
+    # 한 번에 보내는 일괄 UPDATE (executemany 파이프라인이 풀러를 거치며 일부 행을 놓친 적이 있어 단일 문장으로)
+    updated = 0
+    for i in range(0, len(out), 2000):
+        updated += con.execute("""
+            update funds f set fund_code=r.fund_code, legal_form=r.legal_form, asset_class=r.asset_class,
+              asset_sub=r.asset_sub, open_end=r.open_end, additional=r.additional, special=r.special,
+              risk_grade=r.risk_grade, risk_label=r.risk_label, offer_units=r.offer_units, trustee=r.trustee,
+              admin_co=r.admin_co, fee_mgmt=r.fee_mgmt, fee_sales=r.fee_sales, fee_trust=r.fee_trust,
+              fee_admin=r.fee_admin, fee_total=r.fee_total, fee_ter=r.fee_ter, fee_total_min=r.fee_total_min,
+              fee_total_max=r.fee_total_max, class_count=r.class_count, classes=r.classes, nav=r.nav,
+              nav_prev=r.nav_prev, subs_amt=r.subs_amt, redeem_amt=r.redeem_amt, nav_period=r.nav_period,
+              nav_rcept_no=r.nav_rcept_no, updated_at=now()
+            from jsonb_to_recordset(%s::jsonb) as r(fund_key text, fund_code text, legal_form text,
+              asset_class text, asset_sub text, open_end boolean, additional boolean, special text[],
+              risk_grade smallint, risk_label text, offer_units text, trustee text, admin_co text,
+              fee_mgmt numeric, fee_sales numeric, fee_trust numeric, fee_admin numeric, fee_total numeric,
+              fee_ter numeric, fee_total_min numeric, fee_total_max numeric, class_count smallint,
+              classes jsonb, nav numeric, nav_prev numeric, subs_amt numeric, redeem_amt numeric,
+              nav_period text, nav_rcept_no text)
+            where f.fund_key = r.fund_key""", (Jsonb(out[i:i + 2000]),)).rowcount
     con.execute(NAME_SUB_SQL)
-    print(f"[D] 펀드 {len(out)}개 원문 값 반영")
+    print(f"[D] 펀드 {len(out)}개 원문 값 반영 (갱신 {updated}행)")
 
 
 def probe_only():
