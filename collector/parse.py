@@ -204,7 +204,7 @@ def company(name: Optional[str]) -> Optional[str]:
         return None
     s = re.sub(r"\(주\)|㈜|주식회사|\(株\)", "", name)
     s = re.sub(r"\s+", "", s).strip(" .,:;-")
-    if not s or len(s) > 30:
+    if not s or len(s) > 30 or len(s) < 2 or re.match(r"(주소|연락|대표|홈페이지|전화|해당|없음|-)", s):
         return None
     for k, v in ALIASES:
         if k in s:

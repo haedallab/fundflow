@@ -24,7 +24,7 @@ from psycopg.types.json import Jsonb
 
 sys.path.insert(0, os.path.dirname(__file__))
 from dart import BudgetExceeded, Dart  # noqa: E402
-from parse import PARSER_VERSION, Blocked, Viewer, parse_filing  # noqa: E402
+from parse import PARSER_VERSION, Blocked, Viewer, company, parse_filing  # noqa: E402
 
 load_dotenv()
 T0 = time.time()
@@ -264,8 +264,11 @@ def refresh_funds(con, keys: set | None):
     for key, rcp, kind, p in rows:
         m = merged.setdefault(key, {})
         for f in FIELDS:
-            if p.get(f) not in (None, "", []):
-                m[f] = p[f]
+            v = p.get(f)
+            if f in ("trustee", "admin_co"):
+                v = company(v)
+            if v not in (None, "", []):
+                m[f] = v
         if kind == "ISSUE" and p.get("nav") is not None:
             for f in ("nav", "nav_prev", "subs_amt", "redeem_amt", "nav_period"):
                 m[f] = p.get(f)
@@ -343,11 +346,13 @@ def main():
         print(f"  DART 호출 {dart.calls}회")
         n = con.execute(TARGET_SQL).rowcount
         n += con.execute("""update filings set status = 'pending'
+                            where status = 'error' and parsed_at < now() - interval '6 hours'""").rowcount
+        n += con.execute("""update filings set status = 'pending'
                             where status = 'done' and kind in ('SHELF','REG') and not is_amend
                               and coalesce((parsed->>'_v')::int, 1) < %s""", (PARSER_VERSION,)).rowcount
         print(f"[B] 새 파싱 대상 {n}건")
         touched = parse_pending(con, viewer)
-        refresh_funds(con, None if os.environ.get("REBUILD") else touched)
+        refresh_funds(con, None)          # 매번 전체 재계산 (중간에 끊긴 실행이 남긴 누락도 메움)
         if not touched:
             con.execute(AGG_SQL)
         s = con.execute("""select (select count(*) from managers), (select count(*) from funds),
