@@ -250,8 +250,15 @@ FIELDS = ["fund_code", "legal_form", "asset_class", "asset_sub", "open_end", "ad
           "risk_grade", "risk_label", "offer_units", "trustee", "admin_co"]
 
 
+FEE_KEYS = ("mgmt", "sales", "trust", "admin", "total", "ter", "other")
+
+
 def r4(x):
-    return None if x is None else round(float(x), 4)
+    """보수(연 %) 값. 금액이 잘못 들어간 경우(예: 리츠 수탁보수 4천만원)처럼 10%를 넘으면 버림"""
+    if x is None:
+        return None
+    x = float(x)
+    return round(x, 4) if 0 <= x <= 10 else None
 
 
 def refresh_funds(con, keys: set | None):
@@ -277,7 +284,7 @@ def refresh_funds(con, keys: set | None):
             m["classes"] = p["classes"]
     out = []
     for key, m in merged.items():
-        cl = m.get("classes") or []
+        cl = [{k: (r4(v) if k in FEE_KEYS else v) for k, v in c.items()} for c in (m.get("classes") or [])]
         rep = cl[0] if cl else {}
         totals = [c["total"] for c in cl if c.get("total") is not None]
         out.append({

@@ -381,6 +381,9 @@ def fee_table(h: str) -> Optional[dict]:
             # 비율이 아닌 값(설명 문구의 숫자 등)이면 버림
             if any((row.get(k) or 0) > 10 for k in ("mgmt", "sales", "total", "ter")):
                 continue
+            for k in ("trust", "admin", "other"):          # 금액(원)이 섞여 들어온 칸은 비움
+                if (row.get(k) or 0) > 10:
+                    row[k] = None
             classes.append(row)
         if classes:
             return {"classes": classes[:40]}
