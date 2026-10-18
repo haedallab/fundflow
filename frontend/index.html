@@ -178,7 +178,7 @@ footer{border-top:1px solid var(--line);padding:18px 0 36px;font-size:12px;color
 <main class="wrap" id="view"><div class="skel">불러오는 중…</div></main>
 <footer><div class="wrap">데이터: 금융감독원 전자공시시스템(DART) 펀드공시 — 공시목록 OpenAPI와 공시 원문 · 2시간마다 자동 업데이트<span id="loaded"></span> ·
   <a id="api-docs" target="_blank" rel="noopener">API 문서</a><br>
-  수탁사·보수는 최근 3년 안에 원본 일괄신고서·증권신고서를 낸 펀드만, 순자산·설정·해지는 증권발행실적보고서를 낸 펀드만 표시됩니다. 투자 판단 전 공시 원문을 확인하세요.</div></footer>
+  수탁사·보수는 2023년 10월 16일 이후 원본 일괄신고서·증권신고서를 낸 펀드만, 순자산·설정·해지는 증권발행실적보고서를 낸 펀드만 표시됩니다. 투자 판단 전 공시 원문을 확인하세요.</div></footer>
 <div class="tip" id="tip"></div>
 <div class="modal-bg" id="modal"><div class="modal" id="modal-body"></div></div>
 
@@ -275,7 +275,7 @@ async function viewOverview(el, prm) {
   const kinds = ["SHELF", "REG", "PROSPECTUS", "ISSUE", "OTHER"].filter(x => d.filings.some(r => r.kind === x));
   el.innerHTML = `
     <div class="row between"><div><h1>펀드공시 개요</h1>
-      <p class="sub">최근 3년 DART 펀드공시(일괄신고서·증권신고서·투자설명서·증권발행실적보고서) 기준</p></div>
+      <p class="sub">2023.10.16 이후 DART 펀드공시(일괄신고서·증권신고서·투자설명서·증권발행실적보고서) 기준 · 2시간마다 갱신</p></div>
       ${seg("period", [["month", "월"], ["quarter", "분기"], ["year", "연"]], PERIOD)}</div>
     <div class="kpis sec">
       <div class="kpi"><div class="k">공시된 펀드</div><div class="v">${n0(k.funds)}</div><div class="s">운용사 ${n0(k.managers)}곳</div></div>
@@ -330,7 +330,7 @@ async function viewFunds(el, prm) {
       <label class="field">형태<select name="detail_ty">${opt(Object.entries(DETAIL), st.detail_ty)}</select></label>
       <label class="field">신규 신고일 from<input type="date" name="launched_from" value="${esc(st.launched_from)}"></label>
       <label class="field">to<input type="date" name="launched_to" value="${esc(st.launched_to)}"></label>
-      <label class="chk"><input type="checkbox" name="new_only" ${st.new_only ? "checked" : ""}>최근 3년 신규만</label>
+      <label class="chk"><input type="checkbox" name="new_only" ${st.new_only ? "checked" : ""}>2023.10 이후 신규만</label>
       ${st.manager ? `<input type="hidden" name="manager" value="${esc(st.manager)}"><span class="pill">운용사 필터 적용 중 <a href="#" id="nomgr">해제</a></span>` : ""}
       <button class="btn" type="submit">적용</button><button class="btn" type="button" id="reset">초기화</button>
     </form>
@@ -388,7 +388,7 @@ async function openFund(key) {
       </div></div>
       <div class="grid-eq sec">
         <div class="panel"><h3>순자산과 설정·해지 <span class="na" style="font-weight:400">증권발행실적보고서</span></h3>
-          ${f.nav == null ? '<p class="na">최근 3년 안에 제출된 증권발행실적보고서가 없거나 아직 파싱 전입니다.</p>' : `<div class="facts">
+          ${f.nav == null ? '<p class="na">2023년 10월 16일 이후 제출된 증권발행실적보고서가 없거나 아직 파싱 전입니다.</p>' : `<div class="facts">
             <div><b>기말 순자산</b><span style="font-size:18px;font-weight:700">${won(f.nav)}</span></div>
             <div><b>기초 순자산</b>${won(f.nav_prev)}</div>
             <div><b>설정 금액</b>${won(f.subs_amt)}</div><div><b>해지 금액</b>${won(f.redeem_amt)}</div>
@@ -397,7 +397,7 @@ async function openFund(key) {
         <div class="panel"><h3>보수 (연 %) <span class="na" style="font-weight:400">원본 신고서 기준</span></h3>
           ${cl.length ? `<div class="tbl-wrap" style="max-height:260px;overflow:auto"><table><thead><tr><th class="l">클래스</th><th>운용</th><th>판매</th><th>수탁</th><th>사무</th><th>총보수</th><th>총보수·비용</th></tr></thead><tbody>
             ${cl.map(c => `<tr><td class="l sm" title="${esc(c.class)}">${esc(c.class)}</td><td>${fee(c.mgmt)}</td><td>${fee(c.sales)}</td><td>${fee(c.trust)}</td><td>${fee(c.admin)}</td><td><b>${fee(c.total)}</b></td><td>${fee(c.ter)}</td></tr>`).join("")}
-            </tbody></table></div>` : '<p class="na">최근 3년 안에 원본 일괄신고서·증권신고서가 없어 보수를 읽지 못했습니다 (정정 신고서 본문은 PDF).</p>'}</div>
+            </tbody></table></div>` : '<p class="na">2023년 10월 16일 이후 원본 일괄신고서·증권신고서가 없어 보수를 읽지 못했습니다 (정정 신고서 본문은 PDF).</p>'}</div>
       </div>
       <div class="panel sec"><h3>공시 이력</h3><div class="tbl-wrap" style="max-height:300px;overflow:auto"><table><thead><tr><th class="l">접수일</th><th class="l">종류</th><th class="l">보고서명</th><th>원문</th></tr></thead><tbody>
         ${filings.map(r => `<tr><td class="l">${dt(r.rcept_dt)}</td><td class="l">${kindTag(r.kind)}${r.is_amend ? ' <span class="pill">정정</span>' : ""}</td><td class="l sm" style="max-width:420px" title="${esc(r.report_nm)}">${esc(r.report_nm)}</td><td><a href="${r.url}" target="_blank" rel="noopener">DART →</a></td></tr>`).join("")}
@@ -432,7 +432,7 @@ async function viewManager(el, code) {
     <div class="co-h"><div><h1>${esc(m.name)}</h1><p class="sub">DART 고유번호 ${esc(m.corp_code)} · 공시 ${n0(k.filings)}건</p></div>
       <a class="btn" style="display:inline-flex;align-items:center;text-decoration:none" href="#/funds?manager=${m.corp_code}">이 운용사 펀드 전체 →</a></div>
     <div class="kpis sec">
-      <div class="kpi"><div class="k">공시된 펀드</div><div class="v">${n0(k.funds)}</div><div class="s">최근 3년 신규 ${n0(k.launched_3y)}개</div></div>
+      <div class="kpi"><div class="k">공시된 펀드</div><div class="v">${n0(k.funds)}</div><div class="s">2023.10 이후 신규 ${n0(k.launched_3y)}개</div></div>
       <div class="kpi"><div class="k">최근 12개월 신규</div><div class="v">${n0(k.new_12m)}</div><div class="s">신규 펀드 순위 ${k.launch_rank ? k.launch_rank + "위" : "–"}</div></div>
       <div class="kpi"><div class="k">순자산 합계</div><div class="v">${won(k.nav)}</div><div class="s">발행실적보고서 기준</div></div>
       <div class="kpi"><div class="k">순설정</div><div class="v" style="color:var(${k.subs - k.redeem >= 0 ? "--down" : "--up"})">${won(k.subs - k.redeem)}</div><div class="s">설정 ${won(k.subs)} · 해지 ${won(k.redeem)}</div></div>
@@ -450,7 +450,7 @@ async function viewManager(el, code) {
       <div class="panel"><h3>거래 수탁사 (신규 펀드)</h3>${hbars(m.trustees, r => esc(r.trustee), r => r.funds, () => "var(--c3)")}</div>
     </div>
     <div class="panel sec"><h3>최근 신규 펀드</h3><div class="tbl-wrap"><table><thead><tr><th class="l">신고일</th><th class="l">펀드</th><th class="l">유형</th><th>위험</th><th class="l">수탁사</th><th>총보수</th><th>총보수·비용</th></tr></thead><tbody>
-      ${m.recent.map(f => `<tr class="click" data-fund="${esc(f.fund_key)}"><td class="l">${dt(f.launch_dt)}</td><td class="l nm">${esc(f.fund_name)}</td><td class="l">${assetTag(f.asset_sub)}</td><td>${riskTag(f.risk_grade)}</td><td class="l sm">${esc(f.trustee || "–")}</td><td>${fee(f.fee_total)}</td><td>${fee(f.fee_ter)}</td></tr>`).join("") || '<tr><td colspan="7" class="l na">최근 3년 신규 펀드 없음</td></tr>'}
+      ${m.recent.map(f => `<tr class="click" data-fund="${esc(f.fund_key)}"><td class="l">${dt(f.launch_dt)}</td><td class="l nm">${esc(f.fund_name)}</td><td class="l">${assetTag(f.asset_sub)}</td><td>${riskTag(f.risk_grade)}</td><td class="l sm">${esc(f.trustee || "–")}</td><td>${fee(f.fee_total)}</td><td>${fee(f.fee_ter)}</td></tr>`).join("") || '<tr><td colspan="7" class="l na">2023.10 이후 신규 펀드 없음</td></tr>'}
     </tbody></table></div></div>`;
 }
 

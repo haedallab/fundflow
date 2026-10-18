@@ -1,6 +1,6 @@
 """DART 펀드공시 수집기 (GitHub Actions에서 3시간마다 실행)
 
-  A. 공시 목록   OpenAPI list.json, 최근 3년을 90일 구간으로 나눠 G001 신탁형 · G002 회사형 · G003 합병
+  A. 공시 목록   OpenAPI list.json, 2023-10-16부터 90일 구간으로 나눠 G001 신탁형 · G002 회사형 · G003 합병
                  → managers, filings (펀드명은 보고서명 끝 괄호에서 추출)
   B. 대상 선정   펀드별 최신 증권발행실적보고서 · 최신 원본 신고서(일괄·증권신고서)
                  · 원본이 없으면 최신 투자설명서/정정 신고서 → status = pending
@@ -8,7 +8,7 @@
   D. 펀드 갱신   filings 집계 + parsed 값을 오래된 순으로 덮어써 funds 1행 생성
 
 환경변수: DART_API_KEY, DATABASE_URL, DART_BUDGET(기본 15000), RUN_MINUTES(기본 100),
-          YEARS(기본 3), DEBUG_DIR(지정 시 파싱 원문 일부 저장), PARSE_LIMIT(테스트용 최대 건수)
+          SINCE(수집 시작일, 기본 2023-10-16), DEBUG_DIR(지정 시 파싱 원문 일부 저장), PARSE_LIMIT(테스트용 최대 건수)
 """
 import json
 import os
@@ -29,7 +29,7 @@ from parse import PARSER_VERSION, Blocked, Viewer, company, parse_filing  # noqa
 load_dotenv()
 T0 = time.time()
 RUN_MIN = float(os.environ.get("RUN_MINUTES", "100"))
-YEARS = int(os.environ.get("YEARS", "3"))
+SINCE = date.fromisoformat(os.environ.get("SINCE", "2023-10-16"))   # 수집 시작일 (첫 수집 때 '최근 3년'의 시작)
 DEBUG_DIR = os.environ.get("DEBUG_DIR")
 LIST_MIN = float(os.environ.get("LIST_MINUTES", "50"))
 PARSE_LIMIT = int(os.environ.get("PARSE_LIMIT", "0") or 0)
@@ -95,12 +95,14 @@ def norm_name(name: str) -> str:
 
 # ── A. 공시 목록 ────────────────────────────────────────────────────────
 def windows(today: date):
-    start = today - timedelta(days=365 * YEARS)
-    d = today
-    while d > start:
-        s = max(start, d - timedelta(days=89))
-        yield s, d
-        d = s - timedelta(days=1)
+    """SINCE부터 90일씩 고정된 구간 (최신 구간부터). 구간 경계가 날마다 바뀌지 않아야 끝난 구간을 다시 받지 않음"""
+    starts = []
+    s = SINCE
+    while s <= today:
+        starts.append(s)
+        s += timedelta(days=90)
+    for s in reversed(starts):
+        yield s, min(s + timedelta(days=89), today)
 
 
 def collect_list(con, dart: Dart):
@@ -362,7 +364,7 @@ def main():
     dart = Dart(secret_key(), budget)
     viewer = Viewer(pause=float(os.environ.get("WEB_PAUSE", "0.3")))
     with psycopg.connect(**db_kwargs(), autocommit=True, prepare_threshold=None) as con:
-        print(f"[A] 공시 목록 수집 (최근 {YEARS}년, DART 호출 예산 {budget})")
+        print(f"[A] 공시 목록 수집 ({SINCE} 이후, DART 호출 예산 {budget})")
         try:
             collect_list(con, dart)
         except BudgetExceeded as e:

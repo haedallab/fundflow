@@ -143,7 +143,7 @@ def funds(q: Optional[str] = Query(None, description="펀드명·펀드코드 �
           risk: Optional[int] = Query(None, ge=1, le=6),
           detail_ty: Optional[Literal["G001", "G002", "G003"]] = None,
           launched_from: Optional[date] = None, launched_to: Optional[date] = None,
-          new_only: bool = Query(False, description="최근 3년 내 신규 신고 펀드만"),
+          new_only: bool = Query(False, description="수집 시작일(2023-10-16) 이후 신규 신고 펀드만"),
           sort: Literal[tuple(SORTS)] = "last_rcept_dt", order: Literal["asc", "desc"] = "desc",
           page: int = Query(1, ge=1), size: int = Query(50, ge=1, le=200)):
     w, p = ["true"], {}
