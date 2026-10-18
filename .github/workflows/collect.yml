@@ -1,11 +1,11 @@
-# DART 펀드공시를 2시간마다 수집해 Supabase에 반영
+# DART 펀드공시를 평일 하루 1회(21:17 KST) 수집해 Supabase에 반영
 #   A 공시 목록(OpenAPI) → B 파싱 대상 선정 → C 원문 파싱(DART 웹 뷰어) → D 펀드 갱신
 # 필요 Secrets (Settings > Secrets and variables > Actions): DART_API_KEY, DATABASE_URL
 name: collect
 
 on:
   schedule:
-    - cron: "17 */2 * * *"      # 2시간마다 (정각 혼잡을 피해 17분)
+    - cron: "17 12 * * 1-5"     # 평일 12:17 UTC = 21:17 KST (공시는 평일에만 접수, 당일분을 마감 후 반영)
   push:                          # 수집기 코드가 바뀌면 바로 한 번 실행
     branches: [main]
     paths: ["collector/**", ".github/workflows/collect.yml"]

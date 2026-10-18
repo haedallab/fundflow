@@ -1,4 +1,4 @@
-"""DART 펀드공시 수집기 (GitHub Actions에서 3시간마다 실행)
+"""DART 펀드공시 수집기 (GitHub Actions에서 평일 21:17 KST 하루 1회 실행)
 
   A. 공시 목록   OpenAPI list.json, 2023-10-16부터 90일 구간으로 나눠 G001 신탁형 · G002 회사형 · G003 합병
                  → managers, filings (펀드명은 보고서명 끝 괄호에서 추출)

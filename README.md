@@ -2,14 +2,14 @@
 
 금융감독원 전자공시시스템(DART) [펀드공시 상세검색](https://dart.fss.or.kr/dsab005/main.do)에 올라오는
 집합투자증권 공시(일괄신고서·증권신고서·투자설명서·증권발행실적보고서)를 2023년 10월 16일 접수분부터 모아 원문을 파싱하고,
-새로 올라오는 공시도 2시간마다 이어서 수집해 펀드 · 운용사 · 수탁사 정보를 보여주는 서비스입니다. (KAIST 디지털금융 MBA 클라우드 실습 과제)
+새로 올라오는 공시도 평일 매일 21시(KST)에 이어서 수집해 펀드 · 운용사 · 수탁사 정보를 보여주는 서비스입니다. (KAIST 디지털금융 MBA 클라우드 실습 과제)
 
 | 구성 | 위치 | 역할 |
 |---|---|---|
 | 화면 | Vercel `frontend/` → https://fundflow-dart.vercel.app | 개요 · 펀드 Monitor · 운용사 상세 · 운용사 리그테이블 · 수탁사 리그테이블 |
 | API | Render `backend/` → https://fundflow-api-scjl.onrender.com/docs | FastAPI, 읽기 전용 |
 | DB | Supabase PostgreSQL `supabase/migrations/` | managers · funds · filings · fetch_log |
-| 수집 | GitHub Actions `.github/workflows/collect.yml` (2시간마다) | `collector/run.py` |
+| 수집 | GitHub Actions `.github/workflows/collect.yml` (평일 21:17 KST 하루 1회, 수동 실행 가능) | `collector/run.py` |
 
 ## 데이터 흐름
 
